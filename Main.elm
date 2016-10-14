@@ -1,9 +1,10 @@
-import Html exposing (Html, button, div, text, input)
+import Html exposing (Html, button, div, input)
 import Html.Events exposing (on)
 import String
 import Html.App as App
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
+import Html.Attributes exposing (style)
 import Time exposing (Time, second, millisecond)
 import Keyboard
 
@@ -33,15 +34,15 @@ type alias Position =
 type alias Player =
     { playerHeight : Int, jumping : Bool }
 
-type alias Model =
-    { playerHeight : Int,
-      jumping : Bool}
+type Model =
+    NotStarted | Started Player
 
 
 -- init
+
 init : (Model, Cmd Msg)
 init =
-    ( Model floor False, Cmd.none )
+    (NotStarted, Cmd.none)
 
 
 
@@ -53,29 +54,38 @@ type Msg =
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-    let
-        playerHeight = model.playerHeight
-        jumping = (
-            if not model.jumping || model.playerHeight <= maxJump then
-                False
-            else True
-        )
-        newHeight = (
-            if jumping then playerHeight - 1
-            else if playerHeight < floor then playerHeight + 1
-            else playerHeight
-        )
-    in
-        case msg of
-            Tick newTime ->
-                (
-                    { model | playerHeight = newHeight, jumping = jumping },
-                    Cmd.none
+    case model of
+        NotStarted ->
+            case msg of
+                Tick _ ->
+                    ( model, Cmd.none )
+                KeyPress key ->
+                    if key == 32 then ( Started (Player floor False), Cmd.none )
+                    else ( model, Cmd.none )
+        Started player ->
+            let
+                playerHeight = player.playerHeight
+                jumping = (
+                    if not player.jumping || player.playerHeight <= maxJump then
+                        False
+                    else True
                 )
-            KeyPress key ->
-                if key == 32 && playerHeight == floor then
-                    ({ model | jumping = True }, Cmd.none)
-                else (model, Cmd.none)
+                newHeight = (
+                    if jumping then playerHeight - 1
+                    else if playerHeight < floor then playerHeight + 1
+                    else playerHeight
+                )
+            in
+                case msg of
+                    Tick newTime ->
+                        (
+                            Started { player | playerHeight = newHeight, jumping = jumping },
+                            Cmd.none
+                        )
+                    KeyPress key ->
+                        if key == 32 && playerHeight == floor then
+                            ( Started { player | jumping = True }, Cmd.none )
+                        else (Started player, Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -84,25 +94,66 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch([
         Keyboard.presses KeyPress,
-        Time.every (millisecond*5) Tick
+        Time.every (millisecond*2) Tick
     ])
+
+
+
+-- STYLES
+
+containerStyle : List (String, String)
+containerStyle =
+    [
+        ("display", "flex"),
+        ("align-items", "center"),
+        ("justify-content", "center"),
+        ("height", "100%")
+    ]
 
 
 -- VIEW
 
-player : Model -> Html a
-player model =
-    rect [width (toString playerSize), height (toString playerSize), fill "white",
-          y (toString model.playerHeight), x (toString playerX)] []
+getRotation : Float -> Int -> Int -> String
+getRotation deg x y =
+    "rotate(" ++ toString(deg) ++ " " ++ toString(x) ++ " " ++ toString(y) ++ ")"
+
+playerRect : Player -> Html a
+playerRect player =
+    let
+        playerCenterX = playerX + playerSize//2
+        playerCenterY = player.playerHeight + playerSize//2
+        rotationValue = ( 180 / toFloat(floor - (maxJump)) ) * toFloat(floor - player.playerHeight)
+        rotation =
+            if player.jumping then rotationValue
+            else -rotationValue
+
+    in
+        rect [width (toString playerSize), height (toString playerSize), fill "white",
+              transform ( getRotation rotation playerCenterX playerCenterY ),
+              y (toString player.playerHeight), x (toString playerX)] []
 
 view : Model -> Html Msg
 view model =
-    div []
-        [
-            svg [width (toString gameWidth), height (toString gameHeight)] [
-                rect [width "100%", height "100%", fill "black"] [],
-                player model
-            ]
-        ]
-
+    case model of
+        NotStarted ->
+            div [ Html.Attributes.style containerStyle ]
+                [
+                    svg [width (toString gameWidth), height (toString gameHeight)] [
+                        rect [width "100%", height "100%", fill "black"] [],
+                        text' [x (toString (gameWidth//2)),
+                               y (toString (gameHeight//2)),
+                               fill "white",
+                               textAnchor "middle",
+                               fontFamily "Verdana"
+                              ] [ text "Press \"SPACE\" to start game" ]
+                    ]
+                ]
+        Started player ->
+            div [ Html.Attributes.style containerStyle ]
+                [
+                    svg [width (toString gameWidth), height (toString gameHeight)] [
+                        rect [width "100%", height "100%", fill "black"] [],
+                        playerRect player
+                    ]
+                ]
 
