@@ -34,8 +34,11 @@ type alias Position =
 type alias Player =
     { playerHeight : Int, jumping : Bool }
 
+type alias Spike =
+    { position : Position }
+
 type Model =
-    NotStarted | Started Player
+    NotStarted | Started Player (List Spike)
 
 
 -- init
@@ -60,9 +63,9 @@ update msg model =
                 Tick _ ->
                     ( model, Cmd.none )
                 KeyPress key ->
-                    if key == 32 then ( Started (Player floor False), Cmd.none )
+                    if key == 32 then ( Started (Player floor False) [], Cmd.none )
                     else ( model, Cmd.none )
-        Started player ->
+        Started player spikes->
             let
                 playerHeight = player.playerHeight
                 jumping = (
@@ -79,13 +82,14 @@ update msg model =
                 case msg of
                     Tick newTime ->
                         (
-                            Started { player | playerHeight = newHeight, jumping = jumping },
+                            Started { player | playerHeight = newHeight, jumping = jumping }
+                            spikes,
                             Cmd.none
                         )
                     KeyPress key ->
                         if key == 32 && playerHeight == floor then
-                            ( Started { player | jumping = True }, Cmd.none )
-                        else (Started player, Cmd.none)
+                            ( Started { player | jumping = True } spikes, Cmd.none )
+                        else (Started player spikes, Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -112,6 +116,11 @@ containerStyle =
 
 
 -- VIEW
+
+renderSpike : Spike -> Html a
+renderSpike spike =
+    rect [width "10", height "10", fill "white",
+          x (toString (fst spike.position)), y (toString (snd spike.position))] []
 
 getRotation : Float -> Int -> Int -> String
 getRotation deg x y =
@@ -148,12 +157,15 @@ view model =
                               ] [ text "Press \"SPACE\" to start game" ]
                     ]
                 ]
-        Started player ->
+        Started player spikes->
             div [ Html.Attributes.style containerStyle ]
                 [
-                    svg [width (toString gameWidth), height (toString gameHeight)] [
-                        rect [width "100%", height "100%", fill "black"] [],
-                        playerRect player
-                    ]
+                    svg [width (toString gameWidth), height (toString gameHeight)]
+                    (List.concat [
+                        [
+                            rect [width "100%", height "100%", fill "black"] [],
+                            playerRect player
+                        ],
+                        List.map renderSpike spikes
+                    ])
                 ]
-

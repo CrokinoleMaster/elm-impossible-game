@@ -9030,6 +9030,24 @@ var _user$project$Main$getRotation = F3(
 								_elm_lang$core$Basics$toString(y),
 								')'))))));
 	});
+var _user$project$Main$renderSpike = function (spike) {
+	return A2(
+		_elm_lang$svg$Svg$rect,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$svg$Svg_Attributes$width('10'),
+				_elm_lang$svg$Svg_Attributes$height('10'),
+				_elm_lang$svg$Svg_Attributes$fill('white'),
+				_elm_lang$svg$Svg_Attributes$x(
+				_elm_lang$core$Basics$toString(
+					_elm_lang$core$Basics$fst(spike.position))),
+				_elm_lang$svg$Svg_Attributes$y(
+				_elm_lang$core$Basics$toString(
+					_elm_lang$core$Basics$snd(spike.position)))
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[]));
+};
 var _user$project$Main$containerStyle = _elm_lang$core$Native_List.fromArray(
 	[
 		{ctor: '_Tuple2', _0: 'display', _1: 'flex'},
@@ -9135,20 +9153,25 @@ var _user$project$Main$view = function (model) {
 							_elm_lang$svg$Svg_Attributes$height(
 							_elm_lang$core$Basics$toString(_user$project$Main$gameHeight))
 						]),
-					_elm_lang$core$Native_List.fromArray(
-						[
-							A2(
-							_elm_lang$svg$Svg$rect,
-							_elm_lang$core$Native_List.fromArray(
+					_elm_lang$core$List$concat(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$core$Native_List.fromArray(
 								[
-									_elm_lang$svg$Svg_Attributes$width('100%'),
-									_elm_lang$svg$Svg_Attributes$height('100%'),
-									_elm_lang$svg$Svg_Attributes$fill('black')
+									A2(
+									_elm_lang$svg$Svg$rect,
+									_elm_lang$core$Native_List.fromArray(
+										[
+											_elm_lang$svg$Svg_Attributes$width('100%'),
+											_elm_lang$svg$Svg_Attributes$height('100%'),
+											_elm_lang$svg$Svg_Attributes$fill('black')
+										]),
+									_elm_lang$core$Native_List.fromArray(
+										[])),
+									_user$project$Main$playerRect(_p0._0)
 								]),
-							_elm_lang$core$Native_List.fromArray(
-								[])),
-							_user$project$Main$playerRect(_p0._0)
-						]))
+								A2(_elm_lang$core$List$map, _user$project$Main$renderSpike, _p0._1)
+							])))
 				]));
 	}
 };
@@ -9156,9 +9179,13 @@ var _user$project$Main$Player = F2(
 	function (a, b) {
 		return {playerHeight: a, jumping: b};
 	});
-var _user$project$Main$Started = function (a) {
-	return {ctor: 'Started', _0: a};
+var _user$project$Main$Spike = function (a) {
+	return {position: a};
 };
+var _user$project$Main$Started = F2(
+	function (a, b) {
+		return {ctor: 'Started', _0: a, _1: b};
+	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
 		var _p1 = model;
@@ -9169,12 +9196,16 @@ var _user$project$Main$update = F2(
 			} else {
 				return _elm_lang$core$Native_Utils.eq(_p2._0, 32) ? {
 					ctor: '_Tuple2',
-					_0: _user$project$Main$Started(
-						A2(_user$project$Main$Player, _user$project$Main$floor, false)),
+					_0: A2(
+						_user$project$Main$Started,
+						A2(_user$project$Main$Player, _user$project$Main$floor, false),
+						_elm_lang$core$Native_List.fromArray(
+							[])),
 					_1: _elm_lang$core$Platform_Cmd$none
 				} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			}
 		} else {
+			var _p5 = _p1._1;
 			var _p4 = _p1._0;
 			var jumping = (_elm_lang$core$Basics$not(_p4.jumping) || (_elm_lang$core$Native_Utils.cmp(_p4.playerHeight, _user$project$Main$maxJump) < 1)) ? false : true;
 			var playerHeight = _p4.playerHeight;
@@ -9183,23 +9214,27 @@ var _user$project$Main$update = F2(
 			if (_p3.ctor === 'Tick') {
 				return {
 					ctor: '_Tuple2',
-					_0: _user$project$Main$Started(
+					_0: A2(
+						_user$project$Main$Started,
 						_elm_lang$core$Native_Utils.update(
 							_p4,
-							{playerHeight: newHeight, jumping: jumping})),
+							{playerHeight: newHeight, jumping: jumping}),
+						_p5),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			} else {
 				return (_elm_lang$core$Native_Utils.eq(_p3._0, 32) && _elm_lang$core$Native_Utils.eq(playerHeight, _user$project$Main$floor)) ? {
 					ctor: '_Tuple2',
-					_0: _user$project$Main$Started(
+					_0: A2(
+						_user$project$Main$Started,
 						_elm_lang$core$Native_Utils.update(
 							_p4,
-							{jumping: true})),
+							{jumping: true}),
+						_p5),
 					_1: _elm_lang$core$Platform_Cmd$none
 				} : {
 					ctor: '_Tuple2',
-					_0: _user$project$Main$Started(_p4),
+					_0: A2(_user$project$Main$Started, _p4, _p5),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			}
