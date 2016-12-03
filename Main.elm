@@ -55,6 +55,19 @@ init =
 type Msg =
     Tick Time | KeyPress Keyboard.KeyCode | AddSpike
 
+checkCollision : Player -> Spike -> Bool
+checkCollision player spike =
+    let
+        inX = (playerX > spike.position.x) && (playerX < spike.position.x + playerSize)
+        inY = (player.playerHeight + playerSize > spike.position.y) && (player.playerHeight < spike.position.y + playerSize)
+        x =
+            if inX && inY
+                then log "COLLISION" "COLLISION"
+            else
+                ""
+    in
+        inX && inY
+
 addSpike : List Spike -> List Spike
 addSpike spikes =
     let
@@ -67,7 +80,7 @@ addSpike spikes =
         lastSpikeX = lastSpike.position.x
     in
         if lastSpikeX < gameWidth-playerSize-300
-            then List.append [{ position={ x=gameWidth-playerSize, y=gameHeight-playerSize }}] spikes
+            then List.append [{ position={ x=gameWidth-playerSize, y=floor }}] spikes
         else
             spikes
 
@@ -86,6 +99,9 @@ update msg model =
                     ( model, Cmd.none )
         Started player spikes->
             let
+                checkPlayerCollision = checkCollision player
+                collisions = List.map checkPlayerCollision spikes
+
                 playerHeight = player.playerHeight
                 jumping = (
                     if not player.jumping || player.playerHeight <= maxJump then
