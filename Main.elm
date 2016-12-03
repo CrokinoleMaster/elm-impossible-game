@@ -29,7 +29,7 @@ main =
 -- MODEL
 
 type alias Position =
-    ( Int, Int )
+    { x: Int, y: Int }
 
 type alias Player =
     { playerHeight : Int, jumping : Bool }
@@ -83,7 +83,7 @@ update msg model =
                     Tick newTime ->
                         (
                             Started { player | playerHeight = newHeight, jumping = jumping }
-                            spikes,
+                            [{ position={ x=100, y=100 } }],
                             Cmd.none
                         )
                     KeyPress key ->
@@ -117,10 +117,17 @@ containerStyle =
 
 -- VIEW
 
-renderSpike : Spike -> Html a
-renderSpike spike =
-    rect [width "10", height "10", fill "white",
-          x (toString (fst spike.position)), y (toString (snd spike.position))] []
+spikeTriangle : Spike -> Html a
+spikeTriangle spike =
+    let
+        pointLeft = "0,0"
+        pointRight = "0," ++ toString playerSize
+        pointMid = toString (toFloat playerSize / 2) ++ ",0"
+        pointList = [pointLeft, pointMid, pointRight]
+    in
+        polygon [width (toString playerSize), height (toString playerSize), fill "white",
+                 x (toString spike.position.x), y (toString spike.position.y),
+                 points (String.join " " pointList)] []
 
 getRotation : Float -> Int -> Int -> String
 getRotation deg x y =
@@ -166,6 +173,6 @@ view model =
                             rect [width "100%", height "100%", fill "black"] [],
                             playerRect player
                         ],
-                        List.map renderSpike spikes
+                        List.map spikeTriangle spikes
                     ])
                 ]
