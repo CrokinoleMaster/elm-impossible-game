@@ -39,7 +39,7 @@ type alias Spike =
     { position : Position }
 
 type Model =
-    NotStarted | Started Player (List Spike)
+    NotStarted | Started Player (List Spike) | GameOver
 
 
 -- init
@@ -60,11 +60,6 @@ checkCollision player spike =
     let
         inX = (playerX > spike.position.x) && (playerX < spike.position.x + playerSize)
         inY = (player.playerHeight + playerSize > spike.position.y) && (player.playerHeight < spike.position.y + playerSize)
-        x =
-            if inX && inY
-                then log "COLLISION" "COLLISION"
-            else
-                ""
     in
         inX && inY
 
@@ -88,6 +83,8 @@ addSpike spikes =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case model of
+        GameOver ->
+            ( GameOver, Cmd.none )
         NotStarted ->
             case msg of
                 Tick _ ->
@@ -101,6 +98,7 @@ update msg model =
             let
                 checkPlayerCollision = checkCollision player
                 collisions = List.map checkPlayerCollision spikes
+                isGameOver = List.member True collisions
 
                 playerHeight = player.playerHeight
                 jumping = (
@@ -116,6 +114,9 @@ update msg model =
             in
                 case msg of
                     Tick newTime ->
+                        if isGameOver then
+                            ( GameOver, Cmd.none )
+                        else
                         (
                             Started { player | playerHeight = newHeight, jumping = jumping }
                             (addSpike spikes),
@@ -185,31 +186,36 @@ playerRect player =
               transform ( getRotation rotation playerCenterX playerCenterY ),
               y (toString player.playerHeight), x (toString playerX)] []
 
+gameContainer : List (Html msg) -> Html msg
+gameContainer children =
+    div [ Html.Attributes.style containerStyle ]
+        [
+            svg [width (toString gameWidth), height (toString gameHeight)]
+            (List.concat [
+                [rect [width "100%", height "100%", fill "black"] []],
+                children
+            ])
+        ]
+
 view : Model -> Html Msg
 view model =
     case model of
+        GameOver ->
+            gameContainer []
         NotStarted ->
-            div [ Html.Attributes.style containerStyle ]
-                [
-                    svg [width (toString gameWidth), height (toString gameHeight)] [
-                        rect [width "100%", height "100%", fill "black"] [],
-                        text' [x (toString (gameWidth/2)),
-                               y (toString (gameHeight/2)),
-                               fill "white",
-                               textAnchor "middle",
-                               fontFamily "Verdana"
-                              ] [ text "Press \"SPACE\" to start game" ]
-                    ]
-                ]
+            gameContainer [
+                text' [x (toString (gameWidth/2)),
+                       y (toString (gameHeight/2)),
+                       fill "white",
+                       textAnchor "middle",
+                       fontFamily "Verdana"
+                      ] [ text "Press \"SPACE\" to start game" ]
+            ]
         Started player spikes->
-            div [ Html.Attributes.style containerStyle ]
-                [
-                    svg [width (toString gameWidth), height (toString gameHeight)]
+                gameContainer
                     (List.concat [
                         [
-                            rect [width "100%", height "100%", fill "black"] [],
                             playerRect player
                         ],
                         List.map spikeTriangle spikes
                     ])
-                ]
