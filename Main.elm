@@ -120,13 +120,13 @@ containerStyle =
 spikeTriangle : Spike -> Html a
 spikeTriangle spike =
     let
-        pointLeft = "0,0"
-        pointRight = "0," ++ toString playerSize
+        pointLeft = "0," ++ toString playerSize
+        pointRight = toString playerSize ++ "," ++ toString playerSize
         pointMid = toString (toFloat playerSize / 2) ++ ",0"
         pointList = [pointLeft, pointMid, pointRight]
     in
         polygon [width (toString playerSize), height (toString playerSize), fill "white",
-                 x (toString spike.position.x), y (toString spike.position.y),
+                 transform ("translate(" ++ toString(spike.position.x) ++ "," ++ toString(spike.position.y) ++ ")"),
                  points (String.join " " pointList)] []
 
 getRotation : Float -> Int -> Int -> String
