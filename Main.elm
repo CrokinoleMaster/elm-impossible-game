@@ -7,6 +7,7 @@ import Svg.Attributes exposing (..)
 import Html.Attributes exposing (style)
 import Time exposing (Time, second, millisecond)
 import Keyboard
+import Debug exposing (log)
 
 gameHeight : Int
 gameHeight = 200
@@ -52,7 +53,23 @@ init =
 -- UPDATE
 
 type Msg =
-    Tick Time | KeyPress Keyboard.KeyCode
+    Tick Time | KeyPress Keyboard.KeyCode | AddSpike
+
+addSpike : List Spike -> List Spike
+addSpike spikes =
+    let
+        spikes = List.map (\spike -> { position={ x=spike.position.x-1, y=spike.position.y } }) spikes
+        lastSpike = case List.head spikes of
+            Nothing ->
+                { position={ x=0, y=0 } }
+            Just val ->
+                val
+        lastSpikeX = lastSpike.position.x
+    in
+        if lastSpikeX < gameWidth-playerSize-100
+            then List.append [{ position={ x=gameWidth-playerSize, y=gameHeight-playerSize }}] spikes
+        else
+            spikes
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -65,6 +82,8 @@ update msg model =
                 KeyPress key ->
                     if key == 32 then ( Started (Player floor False) [], Cmd.none )
                     else ( model, Cmd.none )
+                AddSpike ->
+                    ( model, Cmd.none )
         Started player spikes->
             let
                 playerHeight = player.playerHeight
@@ -83,13 +102,15 @@ update msg model =
                     Tick newTime ->
                         (
                             Started { player | playerHeight = newHeight, jumping = jumping }
-                            [{ position={ x=100, y=100 } }],
+                            (addSpike spikes),
                             Cmd.none
                         )
                     KeyPress key ->
                         if key == 32 && playerHeight == floor then
                             ( Started { player | jumping = True } spikes, Cmd.none )
                         else (Started player spikes, Cmd.none)
+                    AddSpike ->
+                        ( model, Cmd.none )
 
 
 -- SUBSCRIPTIONS
