@@ -9,17 +9,17 @@ import Time exposing (Time, second, millisecond)
 import Keyboard
 import Debug exposing (log)
 
-gameHeight : Int
+gameHeight : Float
 gameHeight = 200
-gameWidth : Int
+gameWidth : Float
 gameWidth = 600
-playerX : Int
+playerX : Float
 playerX = 200
-playerSize : Int
+playerSize : Float
 playerSize = 20
-maxJump : Int
+maxJump : Float
 maxJump = 100
-floor : Int
+floor : Float
 floor = gameHeight - playerSize
 
 main : Program Never
@@ -30,10 +30,10 @@ main =
 -- MODEL
 
 type alias Position =
-    { x: Int, y: Int }
+    { x: Float, y: Float }
 
 type alias Player =
-    { playerHeight : Int, jumping : Bool }
+    { playerHeight : Float, jumping : Bool }
 
 type alias Spike =
     { position : Position }
@@ -66,7 +66,7 @@ addSpike spikes =
                 val
         lastSpikeX = lastSpike.position.x
     in
-        if lastSpikeX < gameWidth-playerSize-100
+        if lastSpikeX < gameWidth-playerSize-300
             then List.append [{ position={ x=gameWidth-playerSize, y=gameHeight-playerSize }}] spikes
         else
             spikes
@@ -119,7 +119,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch([
         Keyboard.presses KeyPress,
-        Time.every (millisecond*2) Tick
+        Time.every (millisecond*5) Tick
     ])
 
 
@@ -143,23 +143,23 @@ spikeTriangle spike =
     let
         pointLeft = "0," ++ toString playerSize
         pointRight = toString playerSize ++ "," ++ toString playerSize
-        pointMid = toString (toFloat playerSize / 2) ++ ",0"
+        pointMid = toString (playerSize / 2) ++ ",0"
         pointList = [pointLeft, pointMid, pointRight]
     in
         polygon [width (toString playerSize), height (toString playerSize), fill "white",
                  transform ("translate(" ++ toString(spike.position.x) ++ "," ++ toString(spike.position.y) ++ ")"),
                  points (String.join " " pointList)] []
 
-getRotation : Float -> Int -> Int -> String
+getRotation : Float -> Float -> Float -> String
 getRotation deg x y =
     "rotate(" ++ toString(deg) ++ " " ++ toString(x) ++ " " ++ toString(y) ++ ")"
 
 playerRect : Player -> Html a
 playerRect player =
     let
-        playerCenterX = playerX + playerSize//2
-        playerCenterY = player.playerHeight + playerSize//2
-        rotationValue = ( 180 / toFloat(floor - (maxJump)) ) * toFloat(floor - player.playerHeight)
+        playerCenterX = playerX + playerSize/2
+        playerCenterY = player.playerHeight + playerSize/2
+        rotationValue = ( 180 / (floor - (maxJump)) ) * (floor - player.playerHeight)
         rotation =
             if player.jumping then rotationValue
             else -rotationValue
@@ -177,8 +177,8 @@ view model =
                 [
                     svg [width (toString gameWidth), height (toString gameHeight)] [
                         rect [width "100%", height "100%", fill "black"] [],
-                        text' [x (toString (gameWidth//2)),
-                               y (toString (gameHeight//2)),
+                        text' [x (toString (gameWidth/2)),
+                               y (toString (gameHeight/2)),
                                fill "white",
                                textAnchor "middle",
                                fontFamily "Verdana"
