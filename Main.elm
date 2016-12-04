@@ -39,7 +39,7 @@ type alias Spike =
     { position : Position }
 
 type Model =
-    NotStarted | Started Player (List Spike) | GameOver
+    NotStarted | Started Player (List Spike)
 
 
 -- init
@@ -83,8 +83,6 @@ addSpike spikes =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case model of
-        GameOver ->
-            ( GameOver, Cmd.none )
         NotStarted ->
             case msg of
                 Tick _ ->
@@ -115,7 +113,7 @@ update msg model =
                 case msg of
                     Tick newTime ->
                         if isGameOver then
-                            ( GameOver, Cmd.none )
+                            ( NotStarted, Cmd.none )
                         else
                         (
                             Started { player | playerHeight = newHeight, jumping = jumping }
@@ -200,8 +198,6 @@ gameContainer children =
 view : Model -> Html Msg
 view model =
     case model of
-        GameOver ->
-            gameContainer []
         NotStarted ->
             gameContainer [
                 text' [x (toString (gameWidth/2)),
