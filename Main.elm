@@ -75,7 +75,7 @@ addSpike spikes =
         lastSpikeX = lastSpike.position.x
     in
         if lastSpikeX < gameWidth-playerSize-300
-            then List.append [{ position={ x=gameWidth-playerSize, y=floor }}] spikes
+            then List.append [{ position={ x=gameWidth, y=floor }}] spikes
         else
             spikes
 
