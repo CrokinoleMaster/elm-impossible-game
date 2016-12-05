@@ -17,6 +17,10 @@ playerX : Float
 playerX = 200
 playerSize : Float
 playerSize = 20
+playerJumpSpeed : Float
+playerJumpSpeed = 4
+spikeMoveSpeed : Float
+spikeMoveSpeed = 3
 maxJump : Float
 maxJump = 100
 floor : Float
@@ -69,7 +73,7 @@ checkCollision player spike =
 addSpike : List Spike -> List Spike
 addSpike spikes =
     let
-        spikes = List.map (\spike -> { position={ x=spike.position.x-1, y=spike.position.y } }) spikes
+        spikes = List.map (\spike -> { position={ x=spike.position.x-spikeMoveSpeed, y=spike.position.y } }) spikes
         lastSpike = case List.head spikes of
             Nothing ->
                 { position={ x=0, y=0 } }
@@ -91,7 +95,7 @@ update msg model =
                 Tick _ ->
                     ( model, Cmd.none )
                 KeyPress key ->
-                    if key == 32 then ( Started (Player floor False) [] score, Cmd.none )
+                    if key == 32 then ( Started (Player floor False) [] 0, Cmd.none )
                     else ( model, Cmd.none )
                 AddSpike ->
                     ( model, Cmd.none )
@@ -108,19 +112,19 @@ update msg model =
                     else True
                 )
                 newHeight = (
-                    if jumping then playerHeight - 1
-                    else if playerHeight < floor then playerHeight + 1
+                    if jumping then playerHeight - playerJumpSpeed
+                    else if playerHeight < floor then playerHeight + playerJumpSpeed
                     else playerHeight
                 )
             in
                 case msg of
                     Tick newTime ->
                         if isGameOver then
-                            ( NotStarted 0, Cmd.none )
+                            ( NotStarted score, Cmd.none )
                         else
                         (
                             Started { player | playerHeight = newHeight, jumping = jumping }
-                            (addSpike spikes) score,
+                            (addSpike spikes) (score + 1),
                             Cmd.none
                         )
                     KeyPress key ->
@@ -137,7 +141,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch([
         Keyboard.presses KeyPress,
-        Time.every (millisecond*5) Tick
+        Time.every (millisecond*20) Tick
     ])
 
 
@@ -191,12 +195,38 @@ gameContainer : List (Html msg) -> Html msg
 gameContainer children =
     div [ Html.Attributes.style containerStyle ]
         [
-            svg [width (toString gameWidth), height (toString gameHeight)]
+            svg [
+                width (toString gameWidth),
+                height (toString gameHeight),
+                fontFamily "Verdana"
+            ]
             (List.concat [
                 [rect [width "100%", height "100%", fill "black"] []],
                 children
             ])
         ]
+
+scoreText : Score -> Bool -> Html a
+scoreText score started =
+    let
+        anchor = if started then
+                "start"
+            else
+                "middle"
+        xVal = if started then
+                toString 10
+            else
+                toString (gameWidth/2)
+        yVal = if started then
+                toString 20
+            else
+                toString (gameHeight/2 + 50)
+    in
+        text' [x xVal,
+               y yVal,
+               textAnchor anchor,
+               fill "white"
+              ] [ text ("Score: " ++ toString score) ]
 
 view : Model -> Html Msg
 view model =
@@ -206,15 +236,16 @@ view model =
                 text' [x (toString (gameWidth/2)),
                        y (toString (gameHeight/2)),
                        fill "white",
-                       textAnchor "middle",
-                       fontFamily "Verdana"
-                      ] [ text "Press \"SPACE\" to start game" ]
+                       textAnchor "middle"
+                      ] [ text "Press \"SPACE\" to start game" ],
+                scoreText score False
             ]
         Started player spikes score ->
                 gameContainer
                     (List.concat [
                         [
-                            playerRect player
+                            playerRect player,
+                            scoreText score True
                         ],
                         List.map spikeTriangle spikes
                     ])
