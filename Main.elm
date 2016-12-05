@@ -38,15 +38,18 @@ type alias Player =
 type alias Spike =
     { position : Position }
 
+type alias Score =
+    Int
+
 type Model =
-    NotStarted | Started Player (List Spike)
+    NotStarted Score | Started Player (List Spike) Score
 
 
 -- init
 
 init : (Model, Cmd Msg)
 init =
-    (NotStarted, Cmd.none)
+    (NotStarted 0, Cmd.none)
 
 
 
@@ -83,16 +86,16 @@ addSpike spikes =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case model of
-        NotStarted ->
+        NotStarted score ->
             case msg of
                 Tick _ ->
                     ( model, Cmd.none )
                 KeyPress key ->
-                    if key == 32 then ( Started (Player floor False) [], Cmd.none )
+                    if key == 32 then ( Started (Player floor False) [] score, Cmd.none )
                     else ( model, Cmd.none )
                 AddSpike ->
                     ( model, Cmd.none )
-        Started player spikes->
+        Started player spikes score ->
             let
                 checkPlayerCollision = checkCollision player
                 collisions = List.map checkPlayerCollision spikes
@@ -113,17 +116,17 @@ update msg model =
                 case msg of
                     Tick newTime ->
                         if isGameOver then
-                            ( NotStarted, Cmd.none )
+                            ( NotStarted 0, Cmd.none )
                         else
                         (
                             Started { player | playerHeight = newHeight, jumping = jumping }
-                            (addSpike spikes),
+                            (addSpike spikes) score,
                             Cmd.none
                         )
                     KeyPress key ->
                         if key == 32 && playerHeight == floor then
-                            ( Started { player | jumping = True } spikes, Cmd.none )
-                        else (Started player spikes, Cmd.none)
+                            ( Started { player | jumping = True } spikes score, Cmd.none )
+                        else (Started player spikes score, Cmd.none)
                     AddSpike ->
                         ( model, Cmd.none )
 
@@ -198,7 +201,7 @@ gameContainer children =
 view : Model -> Html Msg
 view model =
     case model of
-        NotStarted ->
+        NotStarted score ->
             gameContainer [
                 text' [x (toString (gameWidth/2)),
                        y (toString (gameHeight/2)),
@@ -207,7 +210,7 @@ view model =
                        fontFamily "Verdana"
                       ] [ text "Press \"SPACE\" to start game" ]
             ]
-        Started player spikes->
+        Started player spikes score ->
                 gameContainer
                     (List.concat [
                         [
