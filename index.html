@@ -9030,24 +9030,6 @@ var _user$project$Main$getRotation = F3(
 								_elm_lang$core$Basics$toString(y),
 								')'))))));
 	});
-var _user$project$Main$renderSpike = function (spike) {
-	return A2(
-		_elm_lang$svg$Svg$rect,
-		_elm_lang$core$Native_List.fromArray(
-			[
-				_elm_lang$svg$Svg_Attributes$width('10'),
-				_elm_lang$svg$Svg_Attributes$height('10'),
-				_elm_lang$svg$Svg_Attributes$fill('white'),
-				_elm_lang$svg$Svg_Attributes$x(
-				_elm_lang$core$Basics$toString(
-					_elm_lang$core$Basics$fst(spike.position))),
-				_elm_lang$svg$Svg_Attributes$y(
-				_elm_lang$core$Basics$toString(
-					_elm_lang$core$Basics$snd(spike.position)))
-			]),
-		_elm_lang$core$Native_List.fromArray(
-			[]));
-};
 var _user$project$Main$containerStyle = _elm_lang$core$Native_List.fromArray(
 	[
 		{ctor: '_Tuple2', _0: 'display', _1: 'flex'},
@@ -9056,16 +9038,101 @@ var _user$project$Main$containerStyle = _elm_lang$core$Native_List.fromArray(
 		{ctor: '_Tuple2', _0: 'height', _1: '100%'}
 	]);
 var _user$project$Main$maxJump = 100;
+var _user$project$Main$spikeMoveSpeed = 3;
+var _user$project$Main$playerJumpSpeed = 4;
 var _user$project$Main$playerSize = 20;
+var _user$project$Main$spikeTriangle = function (spike) {
+	var pointMid = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Basics$toString(_user$project$Main$playerSize / 2),
+		',0');
+	var pointRight = A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Basics$toString(_user$project$Main$playerSize),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			',',
+			_elm_lang$core$Basics$toString(_user$project$Main$playerSize)));
+	var pointLeft = A2(
+		_elm_lang$core$Basics_ops['++'],
+		'0,',
+		_elm_lang$core$Basics$toString(_user$project$Main$playerSize));
+	var pointList = _elm_lang$core$Native_List.fromArray(
+		[pointLeft, pointMid, pointRight]);
+	return A2(
+		_elm_lang$svg$Svg$polygon,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$svg$Svg_Attributes$width(
+				_elm_lang$core$Basics$toString(_user$project$Main$playerSize)),
+				_elm_lang$svg$Svg_Attributes$height(
+				_elm_lang$core$Basics$toString(_user$project$Main$playerSize)),
+				_elm_lang$svg$Svg_Attributes$fill('white'),
+				_elm_lang$svg$Svg_Attributes$transform(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'translate(',
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						_elm_lang$core$Basics$toString(spike.position.x),
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							',',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								_elm_lang$core$Basics$toString(spike.position.y),
+								')'))))),
+				_elm_lang$svg$Svg_Attributes$points(
+				A2(_elm_lang$core$String$join, ' ', pointList))
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[]));
+};
 var _user$project$Main$playerX = 200;
+var _user$project$Main$checkCollision = F2(
+	function (player, spike) {
+		var inY = (_elm_lang$core$Native_Utils.cmp(player.playerHeight + _user$project$Main$playerSize, spike.position.y) > 0) && (_elm_lang$core$Native_Utils.cmp(player.playerHeight, spike.position.y + _user$project$Main$playerSize) < 0);
+		var inX = (_elm_lang$core$Native_Utils.cmp(_user$project$Main$playerX, spike.position.x) > 0) && (_elm_lang$core$Native_Utils.cmp(_user$project$Main$playerX, spike.position.x + _user$project$Main$playerSize) < 0);
+		return inX && inY;
+	});
 var _user$project$Main$gameWidth = 600;
 var _user$project$Main$gameHeight = 200;
 var _user$project$Main$floor = _user$project$Main$gameHeight - _user$project$Main$playerSize;
+var _user$project$Main$addSpike = function (spikes) {
+	var spikes = A2(
+		_elm_lang$core$List$map,
+		function (spike) {
+			return {
+				position: {x: spike.position.x - _user$project$Main$spikeMoveSpeed, y: spike.position.y}
+			};
+		},
+		spikes);
+	var lastSpike = function () {
+		var _p0 = _elm_lang$core$List$head(spikes);
+		if (_p0.ctor === 'Nothing') {
+			return {
+				position: {x: 0, y: 0}
+			};
+		} else {
+			return _p0._0;
+		}
+	}();
+	var lastSpikeX = lastSpike.position.x;
+	return (_elm_lang$core$Native_Utils.cmp(lastSpikeX, (_user$project$Main$gameWidth - _user$project$Main$playerSize) - 300) < 0) ? A2(
+		_elm_lang$core$List$append,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				{
+				position: {x: _user$project$Main$gameWidth, y: _user$project$Main$floor}
+			}
+			]),
+		spikes) : spikes;
+};
 var _user$project$Main$playerRect = function (player) {
-	var rotationValue = (180 / _elm_lang$core$Basics$toFloat(_user$project$Main$floor - _user$project$Main$maxJump)) * _elm_lang$core$Basics$toFloat(_user$project$Main$floor - player.playerHeight);
+	var rotationValue = (180 / (_user$project$Main$floor - _user$project$Main$maxJump)) * (_user$project$Main$floor - player.playerHeight);
 	var rotation = player.jumping ? rotationValue : (0 - rotationValue);
-	var playerCenterY = player.playerHeight + ((_user$project$Main$playerSize / 2) | 0);
-	var playerCenterX = _user$project$Main$playerX + ((_user$project$Main$playerSize / 2) | 0);
+	var playerCenterY = player.playerHeight + (_user$project$Main$playerSize / 2);
+	var playerCenterX = _user$project$Main$playerX + (_user$project$Main$playerSize / 2);
 	return A2(
 		_elm_lang$svg$Svg$rect,
 		_elm_lang$core$Native_List.fromArray(
@@ -9085,96 +9152,109 @@ var _user$project$Main$playerRect = function (player) {
 		_elm_lang$core$Native_List.fromArray(
 			[]));
 };
-var _user$project$Main$view = function (model) {
-	var _p0 = model;
-	if (_p0.ctor === 'NotStarted') {
+var _user$project$Main$gameContainer = function (children) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$style(_user$project$Main$containerStyle)
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$svg$Svg$svg,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$svg$Svg_Attributes$width(
+						_elm_lang$core$Basics$toString(_user$project$Main$gameWidth)),
+						_elm_lang$svg$Svg_Attributes$height(
+						_elm_lang$core$Basics$toString(_user$project$Main$gameHeight)),
+						_elm_lang$svg$Svg_Attributes$fontFamily('Verdana')
+					]),
+				_elm_lang$core$List$concat(
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$core$Native_List.fromArray(
+							[
+								A2(
+								_elm_lang$svg$Svg$rect,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$svg$Svg_Attributes$width('100%'),
+										_elm_lang$svg$Svg_Attributes$height('100%'),
+										_elm_lang$svg$Svg_Attributes$fill('black')
+									]),
+								_elm_lang$core$Native_List.fromArray(
+									[]))
+							]),
+							children
+						])))
+			]));
+};
+var _user$project$Main$scoreText = F2(
+	function (score, started) {
+		var yVal = started ? _elm_lang$core$Basics$toString(20) : _elm_lang$core$Basics$toString((_user$project$Main$gameHeight / 2) + 50);
+		var xVal = started ? _elm_lang$core$Basics$toString(10) : _elm_lang$core$Basics$toString(_user$project$Main$gameWidth / 2);
+		var anchor = started ? 'start' : 'middle';
 		return A2(
-			_elm_lang$html$Html$div,
+			_elm_lang$svg$Svg$text$,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html_Attributes$style(_user$project$Main$containerStyle)
+					_elm_lang$svg$Svg_Attributes$x(xVal),
+					_elm_lang$svg$Svg_Attributes$y(yVal),
+					_elm_lang$svg$Svg_Attributes$textAnchor(anchor),
+					_elm_lang$svg$Svg_Attributes$fill('white')
 				]),
 			_elm_lang$core$Native_List.fromArray(
 				[
+					_elm_lang$svg$Svg$text(
 					A2(
-					_elm_lang$svg$Svg$svg,
+						_elm_lang$core$Basics_ops['++'],
+						'Score: ',
+						_elm_lang$core$Basics$toString(score)))
+				]));
+	});
+var _user$project$Main$view = function (model) {
+	var _p1 = model;
+	if (_p1.ctor === 'NotStarted') {
+		return _user$project$Main$gameContainer(
+			_elm_lang$core$Native_List.fromArray(
+				[
+					A2(
+					_elm_lang$svg$Svg$text$,
 					_elm_lang$core$Native_List.fromArray(
 						[
-							_elm_lang$svg$Svg_Attributes$width(
-							_elm_lang$core$Basics$toString(_user$project$Main$gameWidth)),
-							_elm_lang$svg$Svg_Attributes$height(
-							_elm_lang$core$Basics$toString(_user$project$Main$gameHeight))
+							_elm_lang$svg$Svg_Attributes$x(
+							_elm_lang$core$Basics$toString(_user$project$Main$gameWidth / 2)),
+							_elm_lang$svg$Svg_Attributes$y(
+							_elm_lang$core$Basics$toString(_user$project$Main$gameHeight / 2)),
+							_elm_lang$svg$Svg_Attributes$fill('white'),
+							_elm_lang$svg$Svg_Attributes$textAnchor('middle')
 						]),
 					_elm_lang$core$Native_List.fromArray(
 						[
-							A2(
-							_elm_lang$svg$Svg$rect,
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$svg$Svg_Attributes$width('100%'),
-									_elm_lang$svg$Svg_Attributes$height('100%'),
-									_elm_lang$svg$Svg_Attributes$fill('black')
-								]),
-							_elm_lang$core$Native_List.fromArray(
-								[])),
-							A2(
-							_elm_lang$svg$Svg$text$,
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$svg$Svg_Attributes$x(
-									_elm_lang$core$Basics$toString((_user$project$Main$gameWidth / 2) | 0)),
-									_elm_lang$svg$Svg_Attributes$y(
-									_elm_lang$core$Basics$toString((_user$project$Main$gameHeight / 2) | 0)),
-									_elm_lang$svg$Svg_Attributes$fill('white'),
-									_elm_lang$svg$Svg_Attributes$textAnchor('middle'),
-									_elm_lang$svg$Svg_Attributes$fontFamily('Verdana')
-								]),
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$svg$Svg$text('Press \"SPACE\" to start game')
-								]))
-						]))
+							_elm_lang$svg$Svg$text('Press \"SPACE\" to start game')
+						])),
+					A2(_user$project$Main$scoreText, _p1._0, false)
 				]));
 	} else {
-		return A2(
-			_elm_lang$html$Html$div,
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Attributes$style(_user$project$Main$containerStyle)
-				]),
-			_elm_lang$core$Native_List.fromArray(
-				[
-					A2(
-					_elm_lang$svg$Svg$svg,
-					_elm_lang$core$Native_List.fromArray(
-						[
-							_elm_lang$svg$Svg_Attributes$width(
-							_elm_lang$core$Basics$toString(_user$project$Main$gameWidth)),
-							_elm_lang$svg$Svg_Attributes$height(
-							_elm_lang$core$Basics$toString(_user$project$Main$gameHeight))
-						]),
-					_elm_lang$core$List$concat(
+		return _user$project$Main$gameContainer(
+			_elm_lang$core$List$concat(
+				_elm_lang$core$Native_List.fromArray(
+					[
 						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$core$Native_List.fromArray(
-								[
-									A2(
-									_elm_lang$svg$Svg$rect,
-									_elm_lang$core$Native_List.fromArray(
-										[
-											_elm_lang$svg$Svg_Attributes$width('100%'),
-											_elm_lang$svg$Svg_Attributes$height('100%'),
-											_elm_lang$svg$Svg_Attributes$fill('black')
-										]),
-									_elm_lang$core$Native_List.fromArray(
-										[])),
-									_user$project$Main$playerRect(_p0._0)
-								]),
-								A2(_elm_lang$core$List$map, _user$project$Main$renderSpike, _p0._1)
-							])))
-				]));
+						[
+							_user$project$Main$playerRect(_p1._0),
+							A2(_user$project$Main$scoreText, _p1._2, true)
+						]),
+						A2(_elm_lang$core$List$map, _user$project$Main$spikeTriangle, _p1._1)
+					])));
 	}
 };
+var _user$project$Main$Position = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
 var _user$project$Main$Player = F2(
 	function (a, b) {
 		return {playerHeight: a, jumping: b};
@@ -9182,66 +9262,90 @@ var _user$project$Main$Player = F2(
 var _user$project$Main$Spike = function (a) {
 	return {position: a};
 };
-var _user$project$Main$Started = F2(
-	function (a, b) {
-		return {ctor: 'Started', _0: a, _1: b};
+var _user$project$Main$Started = F3(
+	function (a, b, c) {
+		return {ctor: 'Started', _0: a, _1: b, _2: c};
 	});
+var _user$project$Main$NotStarted = function (a) {
+	return {ctor: 'NotStarted', _0: a};
+};
+var _user$project$Main$init = {
+	ctor: '_Tuple2',
+	_0: _user$project$Main$NotStarted(0),
+	_1: _elm_lang$core$Platform_Cmd$none
+};
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p1 = model;
-		if (_p1.ctor === 'NotStarted') {
-			var _p2 = msg;
-			if (_p2.ctor === 'Tick') {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			} else {
-				return _elm_lang$core$Native_Utils.eq(_p2._0, 32) ? {
-					ctor: '_Tuple2',
-					_0: A2(
-						_user$project$Main$Started,
-						A2(_user$project$Main$Player, _user$project$Main$floor, false),
-						_elm_lang$core$Native_List.fromArray(
-							[])),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+		var _p2 = model;
+		if (_p2.ctor === 'NotStarted') {
+			var _p3 = msg;
+			switch (_p3.ctor) {
+				case 'Tick':
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				case 'KeyPress':
+					return _elm_lang$core$Native_Utils.eq(_p3._0, 32) ? {
+						ctor: '_Tuple2',
+						_0: A3(
+							_user$project$Main$Started,
+							A2(_user$project$Main$Player, _user$project$Main$floor, false),
+							_elm_lang$core$Native_List.fromArray(
+								[]),
+							0),
+						_1: _elm_lang$core$Platform_Cmd$none
+					} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				default:
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			}
 		} else {
-			var _p5 = _p1._1;
-			var _p4 = _p1._0;
-			var jumping = (_elm_lang$core$Basics$not(_p4.jumping) || (_elm_lang$core$Native_Utils.cmp(_p4.playerHeight, _user$project$Main$maxJump) < 1)) ? false : true;
-			var playerHeight = _p4.playerHeight;
-			var newHeight = jumping ? (playerHeight - 1) : ((_elm_lang$core$Native_Utils.cmp(playerHeight, _user$project$Main$floor) < 0) ? (playerHeight + 1) : playerHeight);
-			var _p3 = msg;
-			if (_p3.ctor === 'Tick') {
-				return {
-					ctor: '_Tuple2',
-					_0: A2(
-						_user$project$Main$Started,
-						_elm_lang$core$Native_Utils.update(
-							_p4,
-							{playerHeight: newHeight, jumping: jumping}),
-						_p5),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			} else {
-				return (_elm_lang$core$Native_Utils.eq(_p3._0, 32) && _elm_lang$core$Native_Utils.eq(playerHeight, _user$project$Main$floor)) ? {
-					ctor: '_Tuple2',
-					_0: A2(
-						_user$project$Main$Started,
-						_elm_lang$core$Native_Utils.update(
-							_p4,
-							{jumping: true}),
-						_p5),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : {
-					ctor: '_Tuple2',
-					_0: A2(_user$project$Main$Started, _p4, _p5),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+			var _p7 = _p2._1;
+			var _p6 = _p2._2;
+			var _p5 = _p2._0;
+			var jumping = (_elm_lang$core$Basics$not(_p5.jumping) || (_elm_lang$core$Native_Utils.cmp(_p5.playerHeight, _user$project$Main$maxJump) < 1)) ? false : true;
+			var playerHeight = _p5.playerHeight;
+			var newHeight = jumping ? (playerHeight - _user$project$Main$playerJumpSpeed) : ((_elm_lang$core$Native_Utils.cmp(playerHeight, _user$project$Main$floor) < 0) ? (playerHeight + _user$project$Main$playerJumpSpeed) : playerHeight);
+			var checkPlayerCollision = _user$project$Main$checkCollision(_p5);
+			var collisions = A2(_elm_lang$core$List$map, checkPlayerCollision, _p7);
+			var isGameOver = A2(_elm_lang$core$List$member, true, collisions);
+			var _p4 = msg;
+			switch (_p4.ctor) {
+				case 'Tick':
+					return isGameOver ? {
+						ctor: '_Tuple2',
+						_0: _user$project$Main$NotStarted(_p6),
+						_1: _elm_lang$core$Platform_Cmd$none
+					} : {
+						ctor: '_Tuple2',
+						_0: A3(
+							_user$project$Main$Started,
+							_elm_lang$core$Native_Utils.update(
+								_p5,
+								{playerHeight: newHeight, jumping: jumping}),
+							_user$project$Main$addSpike(_p7),
+							_p6 + 1),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				case 'KeyPress':
+					return (_elm_lang$core$Native_Utils.eq(_p4._0, 32) && _elm_lang$core$Native_Utils.eq(playerHeight, _user$project$Main$floor)) ? {
+						ctor: '_Tuple2',
+						_0: A3(
+							_user$project$Main$Started,
+							_elm_lang$core$Native_Utils.update(
+								_p5,
+								{jumping: true}),
+							_p7,
+							_p6),
+						_1: _elm_lang$core$Platform_Cmd$none
+					} : {
+						ctor: '_Tuple2',
+						_0: A3(_user$project$Main$Started, _p5, _p7, _p6),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				default:
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			}
 		}
 	});
-var _user$project$Main$NotStarted = {ctor: 'NotStarted'};
-var _user$project$Main$init = {ctor: '_Tuple2', _0: _user$project$Main$NotStarted, _1: _elm_lang$core$Platform_Cmd$none};
+var _user$project$Main$AddSpike = {ctor: 'AddSpike'};
 var _user$project$Main$KeyPress = function (a) {
 	return {ctor: 'KeyPress', _0: a};
 };
@@ -9253,7 +9357,7 @@ var _user$project$Main$subscriptions = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_elm_lang$keyboard$Keyboard$presses(_user$project$Main$KeyPress),
-				A2(_elm_lang$core$Time$every, _elm_lang$core$Time$millisecond * 2, _user$project$Main$Tick)
+				A2(_elm_lang$core$Time$every, _elm_lang$core$Time$millisecond * 20, _user$project$Main$Tick)
 			]));
 };
 var _user$project$Main$main = {
